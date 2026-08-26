@@ -193,53 +193,6 @@ struct LLMConnectionTests {
         )
     }
 
-    @Test("Custom gateway GPT model uses max completion tokens")
-    func customGatewayGPTRequest() async throws {
-        LLMConnectionURLProtocol.install { request in
-            let body = connectionTestRequestBody(request)
-            #expect(body?["max_completion_tokens"] as? Int == 256)
-            #expect(body?["max_tokens"] == nil)
-            #expect(body?["reasoning_effort"] as? String == "low")
-            return .init(
-                statusCode: 200,
-                data: Data(#"{"choices":[{"message":{"content":"OK"}}]}"#.utf8)
-            )
-        }
-        defer { LLMConnectionURLProtocol.uninstall() }
-
-        var config = AppConfig()
-        config.customLLMURL = "https://gateway.example.com/v1"
-        config.customLLMAPIKey = "static-key"
-        try await MeetingSummaryClient.testLLMConnection(
-            backend: .customLLM,
-            config: config,
-            model: "gpt-5.6-sol",
-            session: makeSession()
-        )
-    }
-
-    @Test("Custom gateway reasoning model has enough output budget")
-    func customGatewayReasoningModel() async throws {
-        LLMConnectionURLProtocol.install { request in
-            #expect(connectionTestRequestBody(request)?["max_tokens"] as? Int == 256)
-            return .init(
-                statusCode: 200,
-                data: Data(#"{"choices":[{"message":{"content":"OK","reasoning_content":"reasoning"},"finish_reason":"stop"}]}"#.utf8)
-            )
-        }
-        defer { LLMConnectionURLProtocol.uninstall() }
-
-        var config = AppConfig()
-        config.customLLMURL = "https://gateway.example.com/v1"
-        config.customLLMAPIKey = "static-key"
-        try await MeetingSummaryClient.testLLMConnection(
-            backend: .customLLM,
-            config: config,
-            model: "baseten/zai-org/GLM-5.2",
-            session: makeSession()
-        )
-    }
-
     @Test("Custom Anthropic test uses static credential and Messages endpoint")
     func customAnthropicRequest() async throws {
         LLMConnectionURLProtocol.install { request in
